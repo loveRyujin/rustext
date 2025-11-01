@@ -56,6 +56,8 @@ impl Editor {
     }
 
     fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
+        self.terminal.hide_cursor()?;
+
         if self.should_exit {
             self.terminal.clear_screen()?;
             self.terminal.reset_cursor()?;
@@ -64,6 +66,8 @@ impl Editor {
             self.terminal.draw_rows()?;
             self.terminal.reset_cursor()?;
         }
+
+        self.terminal.show_cursor()?;
 
         Ok(())
     }
