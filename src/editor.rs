@@ -26,12 +26,12 @@ impl Editor {
 
     fn repl(&mut self) -> Result<(), std::io::Error> {
         loop {
-            let event = read()?;
-            self.eval_event(&event);
             self.refresh_screen()?;
             if self.should_exit {
                 break;
             }
+            let event = read()?;
+            self.eval_event(&event);
         }
 
         Ok(())
@@ -60,6 +60,9 @@ impl Editor {
             self.terminal.clear_screen()?;
             self.terminal.reset_cursor()?;
             print!("Goodbye!\r\n");
+        } else {
+            self.terminal.draw_rows()?;
+            self.terminal.reset_cursor()?;
         }
 
         Ok(())

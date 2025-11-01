@@ -16,7 +16,7 @@ impl Terminal {
     pub fn initialize(&mut self) -> Result<(), std::io::Error> {
         enable_raw_mode()?;
         self.clear_screen()?;
-        self.draw_rows()?;
+        self.reset_cursor()?;
         Ok(())
     }
 
@@ -25,14 +25,14 @@ impl Terminal {
         Ok(())
     }
 
-    fn draw_rows(&mut self) -> Result<(), std::io::Error> {
-        let (_, rows) = size()?;
-        for row in 1..rows {
-            self.cursor_move_to((0, row))?;
+    pub fn draw_rows(&mut self) -> Result<(), std::io::Error> {
+        let row_height = size()?.1;
+        for row in 0..row_height {
             print!("~");
+            if row + 1 < row_height {
+                print!("\r\n");
+            }
         }
-
-        self.reset_cursor()?;
 
         Ok(())
     }
