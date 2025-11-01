@@ -1,7 +1,8 @@
+use crossterm::cursor::MoveTo;
 use crossterm::event::Event;
 use crossterm::event::{Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, read};
 use crossterm::execute;
-use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode};
+use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size};
 use std::io::stdout;
 
 pub struct Editor {
@@ -15,7 +16,8 @@ impl Editor {
 
     fn initialize() -> Result<(), std::io::Error> {
         enable_raw_mode()?;
-        Self::clear_screen()
+        Self::clear_screen()?;
+        Self::draw_rows()
     }
 
     fn terminate() -> Result<(), std::io::Error> {
@@ -25,6 +27,23 @@ impl Editor {
     fn clear_screen() -> Result<(), std::io::Error> {
         let mut stdout = stdout();
         execute!(stdout, Clear(ClearType::All))
+    }
+
+    fn draw_rows() -> Result<(), std::io::Error> {
+        let mut stdout = stdout();
+        let (_, rows) = size()?;
+        for row in 1..rows {
+            execute!(stdout, MoveTo(0, row))?;
+            print!("{}", "~");
+        }
+
+        Self::reset_cursor()?;
+        Ok(())
+    }
+
+    fn reset_cursor() -> Result<(), std::io::Error> {
+        let mut stdout = stdout();
+        execute!(stdout, MoveTo(0, 0))
     }
 
     pub fn run(&mut self) {
@@ -68,6 +87,7 @@ impl Editor {
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
         if self.should_exit {
             Self::clear_screen()?;
+            Self::reset_cursor()?;
             print!("Goodbye!\r\n");
         }
 
