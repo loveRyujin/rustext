@@ -1,55 +1,26 @@
-use crossterm::cursor::MoveTo;
 use crossterm::event::Event;
 use crossterm::event::{Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, read};
-use crossterm::execute;
-use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size};
-use std::io::stdout;
+
+mod terminal;
+use terminal::Terminal;
 
 pub struct Editor {
     should_exit: bool,
+    terminal: Terminal,
 }
 
 impl Editor {
     pub fn new() -> Self {
-        Editor { should_exit: false }
-    }
-
-    fn initialize() -> Result<(), std::io::Error> {
-        enable_raw_mode()?;
-        Self::clear_screen()?;
-        Self::draw_rows()
-    }
-
-    fn terminate() -> Result<(), std::io::Error> {
-        disable_raw_mode()
-    }
-
-    fn clear_screen() -> Result<(), std::io::Error> {
-        let mut stdout = stdout();
-        execute!(stdout, Clear(ClearType::All))
-    }
-
-    fn draw_rows() -> Result<(), std::io::Error> {
-        let mut stdout = stdout();
-        let (_, rows) = size()?;
-        for row in 1..rows {
-            execute!(stdout, MoveTo(0, row))?;
-            print!("{}", "~");
+        Self {
+            should_exit: false,
+            terminal: Terminal::new(),
         }
-
-        Self::reset_cursor()?;
-        Ok(())
-    }
-
-    fn reset_cursor() -> Result<(), std::io::Error> {
-        let mut stdout = stdout();
-        execute!(stdout, MoveTo(0, 0))
     }
 
     pub fn run(&mut self) {
-        Self::initialize().unwrap();
+        self.terminal.initialize().unwrap();
         let result = self.repl();
-        Self::terminate().unwrap();
+        self.terminal.terminate().unwrap();
         result.unwrap();
     }
 
@@ -84,10 +55,10 @@ impl Editor {
         }
     }
 
-    fn refresh_screen(&self) -> Result<(), std::io::Error> {
+    fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
         if self.should_exit {
-            Self::clear_screen()?;
-            Self::reset_cursor()?;
+            self.terminal.clear_screen()?;
+            self.terminal.reset_cursor()?;
             print!("Goodbye!\r\n");
         }
 
