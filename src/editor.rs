@@ -31,13 +31,13 @@ impl Editor {
                 break;
             }
             let event = read()?;
-            self.eval_event(&event);
+            self.eval_event(&event)?;
         }
 
         Ok(())
     }
 
-    fn eval_event(&mut self, event: &Event) {
+    fn eval_event(&mut self, event: &Event) -> Result<(), std::io::Error>{
         if let Key(KeyEvent {
             code,
             modifiers,
@@ -45,14 +45,16 @@ impl Editor {
             state,
         }) = event
         {
+            self.terminal.print(format!("Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r").as_str())?;
             println!("Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r");
             match code {
                 Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_exit = true;
-                }
+                },
                 _ => (),
             }
         }
+        Ok(())
     }
 
     fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
@@ -61,13 +63,14 @@ impl Editor {
         if self.should_exit {
             self.terminal.clear_screen()?;
             self.terminal.reset_cursor()?;
-            print!("Goodbye!\r\n");
+            self.terminal.print("Goodbye!\r\n")?;
         } else {
             self.terminal.draw_rows()?;
             self.terminal.reset_cursor()?;
         }
 
         self.terminal.show_cursor()?;
+        self.terminal.execute()?;
 
         Ok(())
     }
