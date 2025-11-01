@@ -1,4 +1,4 @@
-use std::io::{Stdout, Write, stdout};
+use std::io::{Write, stdout};
 
 use crossterm::cursor::{Hide, MoveTo, Show};
 use crossterm::queue;
@@ -15,39 +15,33 @@ struct Pos {
     y: u16,
 }
 
-pub struct Terminal {
-    stdout: Stdout,
-}
+pub struct Terminal;
 
 impl Terminal {
-    pub fn new() -> Self {
-        Self { stdout: stdout() }
-    }
-
-    pub fn initialize(&mut self) -> Result<(), std::io::Error> {
+    pub fn initialize() -> Result<(), std::io::Error> {
         enable_raw_mode()?;
-        self.clear_screen()?;
-        self.reset_cursor()?;
-        self.execute()?;
+        Self::clear_screen()?;
+        Self::reset_cursor()?;
+        Self::execute()?;
         Ok(())
     }
 
-    pub fn terminate(&mut self) -> Result<(), std::io::Error> {
-        self.execute()?;
+    pub fn terminate() -> Result<(), std::io::Error> {
+        Self::execute()?;
         disable_raw_mode()?;
         Ok(())
     }
 
-    pub fn print(&mut self, text: &str) -> Result<(), std::io::Error> {
-        queue!(self.stdout, Print(text))?;
+    pub fn print(text: &str) -> Result<(), std::io::Error> {
+        queue!(stdout(), Print(text))?;
         Ok(())
     }
 
-    pub fn draw_rows(&mut self) -> Result<(), std::io::Error> {
+    pub fn draw_rows() -> Result<(), std::io::Error> {
         let row_height = Self::size()?.height;
         for row in 0..row_height {
-            self.clear_line()?;
-            self.print("~")?;
+            Self::clear_line()?;
+            Self::print("~")?;
             if row + 1 < row_height {
                 print!("\r\n");
             }
@@ -56,43 +50,46 @@ impl Terminal {
         Ok(())
     }
 
-    pub fn clear_screen(&mut self) -> Result<(), std::io::Error> {
-        queue!(self.stdout, Clear(ClearType::All))?;
+    pub fn clear_screen() -> Result<(), std::io::Error> {
+        queue!(stdout(), Clear(ClearType::All))?;
         Ok(())
     }
 
-    pub fn clear_line(&mut self) -> Result<(), std::io::Error> {
-        queue!(self.stdout, Clear(ClearType::CurrentLine))?;
+    pub fn clear_line() -> Result<(), std::io::Error> {
+        queue!(stdout(), Clear(ClearType::CurrentLine))?;
         Ok(())
     }
 
-    pub fn hide_cursor(&mut self) -> Result<(), std::io::Error> {
-        queue!(self.stdout, Hide)?;
+    pub fn hide_cursor() -> Result<(), std::io::Error> {
+        queue!(stdout(), Hide)?;
         Ok(())
     }
 
-    pub fn show_cursor(&mut self) -> Result<(), std::io::Error> {
-        queue!(self.stdout, Show)?;
+    pub fn show_cursor() -> Result<(), std::io::Error> {
+        queue!(stdout(), Show)?;
         Ok(())
     }
 
-    pub fn reset_cursor(&mut self) -> Result<(), std::io::Error> {
-        self.cursor_move_to(Pos{x:0, y:0})?;
+    pub fn reset_cursor() -> Result<(), std::io::Error> {
+        Self::cursor_move_to(Pos { x: 0, y: 0 })?;
         Ok(())
     }
 
-    fn cursor_move_to(&mut self, pos: Pos) -> Result<(), std::io::Error> {
-        queue!(self.stdout, MoveTo(pos.x, pos.y))?;
+    fn cursor_move_to(pos: Pos) -> Result<(), std::io::Error> {
+        queue!(stdout(), MoveTo(pos.x, pos.y))?;
         Ok(())
     }
 
     fn size() -> Result<Size, std::io::Error> {
         let (width, height) = size()?;
-        Ok(Size { height: height, width: width })
+        Ok(Size {
+            height: height,
+            width: width,
+        })
     }
 
-    pub fn execute(&mut self) -> Result<(), std::io::Error> {
-        self.stdout.flush()?;
+    pub fn execute() -> Result<(), std::io::Error> {
+        stdout().flush()?;
         Ok(())
     }
 }

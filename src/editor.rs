@@ -6,21 +6,17 @@ use terminal::Terminal;
 
 pub struct Editor {
     should_exit: bool,
-    terminal: Terminal,
 }
 
 impl Editor {
     pub fn new() -> Self {
-        Self {
-            should_exit: false,
-            terminal: Terminal::new(),
-        }
+        Self { should_exit: false }
     }
 
     pub fn run(&mut self) {
-        self.terminal.initialize().unwrap();
+        Terminal::initialize().unwrap();
         let result = self.repl();
-        self.terminal.terminate().unwrap();
+        Terminal::terminate().unwrap();
         result.unwrap();
     }
 
@@ -37,7 +33,7 @@ impl Editor {
         Ok(())
     }
 
-    fn eval_event(&mut self, event: &Event) -> Result<(), std::io::Error>{
+    fn eval_event(&mut self, event: &Event) -> Result<(), std::io::Error> {
         if let Key(KeyEvent {
             code,
             modifiers,
@@ -45,12 +41,17 @@ impl Editor {
             state,
         }) = event
         {
-            self.terminal.print(format!("Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r").as_str())?;
+            Terminal::print(
+                format!(
+                    "Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r"
+                )
+                .as_str(),
+            )?;
             println!("Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r");
             match code {
                 Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_exit = true;
-                },
+                }
                 _ => (),
             }
         }
@@ -58,19 +59,19 @@ impl Editor {
     }
 
     fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
-        self.terminal.hide_cursor()?;
+        Terminal::hide_cursor()?;
 
         if self.should_exit {
-            self.terminal.clear_screen()?;
-            self.terminal.reset_cursor()?;
-            self.terminal.print("Goodbye!\r\n")?;
+            Terminal::clear_screen()?;
+            Terminal::reset_cursor()?;
+            Terminal::print("Goodbye!\r\n")?;
         } else {
-            self.terminal.draw_rows()?;
-            self.terminal.reset_cursor()?;
+            Terminal::draw_rows()?;
+            Terminal::reset_cursor()?;
         }
 
-        self.terminal.show_cursor()?;
-        self.terminal.execute()?;
+        Terminal::show_cursor()?;
+        Terminal::execute()?;
 
         Ok(())
     }
