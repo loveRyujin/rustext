@@ -5,14 +5,14 @@ use crossterm::queue;
 use crossterm::style::Print;
 use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size};
 
-struct Size {
-    height: u16,
-    width: u16,
+pub struct Size {
+    pub height: u16,
+    pub width: u16,
 }
 
-struct Pos {
-    x: u16,
-    y: u16,
+pub struct Pos {
+    pub x: u16,
+    pub y: u16,
 }
 
 pub struct Terminal;
@@ -34,19 +34,6 @@ impl Terminal {
 
     pub fn print(text: &str) -> Result<(), Error> {
         queue!(stdout(), Print(text))?;
-        Ok(())
-    }
-
-    pub fn draw_rows() -> Result<(), Error> {
-        let row_height = Self::size()?.height;
-        for row in 0..row_height {
-            Self::clear_line()?;
-            Self::print("~")?;
-            if row + 1 < row_height {
-                Self::print("\r\n")?;
-            }
-        }
-
         Ok(())
     }
 
@@ -75,24 +62,12 @@ impl Terminal {
         Ok(())
     }
 
-    pub fn show_logo() -> Result<(), Error> {
-        let size = Self::size()?;
-        let logo_position = Pos {
-            x: size.width / 2,
-            y: size.height / 3 * 2,
-        };
-        Self::cursor_move_to(logo_position)?;
-        Self::print("rustext v0.1.0")?;
-
-        Ok(())
-    }
-
-    fn cursor_move_to(pos: Pos) -> Result<(), Error> {
+    pub fn cursor_move_to(pos: Pos) -> Result<(), Error> {
         queue!(stdout(), MoveTo(pos.x, pos.y))?;
         Ok(())
     }
 
-    fn size() -> Result<Size, Error> {
+    pub fn size() -> Result<Size, Error> {
         let (width, height) = size()?;
         Ok(Size {
             height: height,

@@ -5,6 +5,9 @@ use std::io::Error;
 mod terminal;
 use terminal::Terminal;
 
+const NAME: &str = env!("CARGO_PKG_NAME");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub struct Editor {
     should_exit: bool,
 }
@@ -67,13 +70,49 @@ impl Editor {
             Terminal::reset_cursor()?;
             Terminal::print("Goodbye!\r\n")?;
         } else {
-            Terminal::draw_rows()?;
-            Terminal::show_logo()?;
+            Self::draw_rows()?;
             Terminal::reset_cursor()?;
         }
 
         Terminal::show_cursor()?;
         Terminal::execute()?;
+
+        Ok(())
+    }
+
+    fn draw_rows() -> Result<(), Error> {
+        let size = Terminal::size()?;
+        for current_height in 0..size.height {
+            Terminal::clear_line()?;
+            if current_height == size.height / 3 {
+                Self::draw_welcome_message()?;
+            } else {
+                Self::draw_empth_row()?;
+            }
+
+            if current_height + 1 < size.height {
+                Terminal::print("\r\n")?;
+            }
+        }
+        Ok(())
+    }
+
+    fn draw_empth_row() -> Result<(), Error> {
+        Terminal::print("~")?;
+        Ok(())
+    }
+
+    fn draw_welcome_message() -> Result<(), Error> {
+        let mut welcome_message = format!("{NAME} editor --version {VERSION}");
+        let width = Terminal::size()?.width as usize;
+        let message_len = welcome_message.len();
+        let padding = (width - message_len) / 2;
+        let spaces = " ".repeat(padding - 1);
+
+        welcome_message = format!("~{spaces}{welcome_message}");
+        welcome_message.truncate(width);
+
+        Terminal::print(welcome_message.as_str())?;
 
         Ok(())
     }
