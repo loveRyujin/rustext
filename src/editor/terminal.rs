@@ -7,13 +7,13 @@ use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, s
 use crossterm::{Command, queue};
 
 pub struct Size {
-    pub height: u16,
-    pub width: u16,
+    pub height: usize,
+    pub width: usize,
 }
 
 pub struct Pos {
-    pub x: u16,
-    pub y: u16,
+    pub x: usize,
+    pub y: usize,
 }
 
 pub struct Terminal;
@@ -64,12 +64,20 @@ impl Terminal {
     }
 
     pub fn cursor_move_to(pos: Pos) -> Result<(), Error> {
-        Self::queue_command(MoveTo(pos.x, pos.y))?;
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+        Self::queue_command(MoveTo(pos.x as u16, pos.y as u16))?;
         Ok(())
     }
 
     pub fn size() -> Result<Size, Error> {
         let (width, height) = size()?;
+
+        #[allow(clippy::as_conversions)]
+        let height = height as usize;
+
+        #[allow(clippy::as_conversions)]
+        let width = width as usize;
+
         Ok(Size {
             height: height,
             width: width,

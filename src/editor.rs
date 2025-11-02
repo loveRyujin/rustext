@@ -84,13 +84,15 @@ impl Editor {
         let size = Terminal::size()?;
         for current_height in 0..size.height {
             Terminal::clear_line()?;
+
+            #[allow(clippy::integer_division)]
             if current_height == size.height / 3 {
                 Self::draw_welcome_message()?;
             } else {
                 Self::draw_empth_row()?;
             }
 
-            if current_height + 1 < size.height {
+            if current_height.saturating_add(1) < size.height {
                 Terminal::print("\r\n")?;
             }
         }
@@ -106,8 +108,11 @@ impl Editor {
         let mut welcome_message = format!("{NAME} editor --version {VERSION}");
         let width = Terminal::size()?.width as usize;
         let message_len = welcome_message.len();
-        let padding = (width - message_len) / 2;
-        let spaces = " ".repeat(padding - 1);
+
+        #[allow(clippy::integer_division)]
+        let padding = (width.saturating_sub(message_len)) / 2;
+
+        let spaces = " ".repeat(padding.saturating_sub(1));
 
         welcome_message = format!("~{spaces}{welcome_message}");
         welcome_message.truncate(width);
