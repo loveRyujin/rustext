@@ -2,9 +2,9 @@ use std::fmt::Display;
 use std::io::{Error, Write, stdout};
 
 use crossterm::cursor::{Hide, MoveTo, Show};
-use crossterm::{Command, queue};
 use crossterm::style::Print;
 use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size};
+use crossterm::{Command, queue};
 
 pub struct Size {
     pub height: u16,
