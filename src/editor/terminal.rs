@@ -43,7 +43,7 @@ impl Terminal {
             Self::clear_line()?;
             Self::print("~")?;
             if row + 1 < row_height {
-                print!("\r\n");
+                Self::print("\r\n")?;
             }
         }
 
@@ -72,6 +72,18 @@ impl Terminal {
 
     pub fn reset_cursor() -> Result<(), std::io::Error> {
         Self::cursor_move_to(Pos { x: 0, y: 0 })?;
+        Ok(())
+    }
+
+    pub fn show_logo() -> Result<(), std::io::Error> {
+        let size = Self::size()?;
+        let logo_position = Pos {
+            x: size.width / 2,
+            y: size.height / 3 * 2,
+        };
+        Self::cursor_move_to(logo_position)?;
+        Self::print("rustext v0.1.0")?;
+
         Ok(())
     }
 

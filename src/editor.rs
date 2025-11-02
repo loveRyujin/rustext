@@ -67,6 +67,7 @@ impl Editor {
             Terminal::print("Goodbye!\r\n")?;
         } else {
             Terminal::draw_rows()?;
+            Terminal::show_logo()?;
             Terminal::reset_cursor()?;
         }
 
