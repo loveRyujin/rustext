@@ -1,4 +1,4 @@
-use std::io::{Write, stdout};
+use std::io::{Error, Write, stdout};
 
 use crossterm::cursor::{Hide, MoveTo, Show};
 use crossterm::queue;
@@ -18,7 +18,7 @@ struct Pos {
 pub struct Terminal;
 
 impl Terminal {
-    pub fn initialize() -> Result<(), std::io::Error> {
+    pub fn initialize() -> Result<(), Error> {
         enable_raw_mode()?;
         Self::clear_screen()?;
         Self::reset_cursor()?;
@@ -26,18 +26,18 @@ impl Terminal {
         Ok(())
     }
 
-    pub fn terminate() -> Result<(), std::io::Error> {
+    pub fn terminate() -> Result<(), Error> {
         Self::execute()?;
         disable_raw_mode()?;
         Ok(())
     }
 
-    pub fn print(text: &str) -> Result<(), std::io::Error> {
+    pub fn print(text: &str) -> Result<(), Error> {
         queue!(stdout(), Print(text))?;
         Ok(())
     }
 
-    pub fn draw_rows() -> Result<(), std::io::Error> {
+    pub fn draw_rows() -> Result<(), Error> {
         let row_height = Self::size()?.height;
         for row in 0..row_height {
             Self::clear_line()?;
@@ -50,32 +50,32 @@ impl Terminal {
         Ok(())
     }
 
-    pub fn clear_screen() -> Result<(), std::io::Error> {
+    pub fn clear_screen() -> Result<(), Error> {
         queue!(stdout(), Clear(ClearType::All))?;
         Ok(())
     }
 
-    pub fn clear_line() -> Result<(), std::io::Error> {
+    pub fn clear_line() -> Result<(), Error> {
         queue!(stdout(), Clear(ClearType::CurrentLine))?;
         Ok(())
     }
 
-    pub fn hide_cursor() -> Result<(), std::io::Error> {
+    pub fn hide_cursor() -> Result<(), Error> {
         queue!(stdout(), Hide)?;
         Ok(())
     }
 
-    pub fn show_cursor() -> Result<(), std::io::Error> {
+    pub fn show_cursor() -> Result<(), Error> {
         queue!(stdout(), Show)?;
         Ok(())
     }
 
-    pub fn reset_cursor() -> Result<(), std::io::Error> {
+    pub fn reset_cursor() -> Result<(), Error> {
         Self::cursor_move_to(Pos { x: 0, y: 0 })?;
         Ok(())
     }
 
-    pub fn show_logo() -> Result<(), std::io::Error> {
+    pub fn show_logo() -> Result<(), Error> {
         let size = Self::size()?;
         let logo_position = Pos {
             x: size.width / 2,
@@ -87,12 +87,12 @@ impl Terminal {
         Ok(())
     }
 
-    fn cursor_move_to(pos: Pos) -> Result<(), std::io::Error> {
+    fn cursor_move_to(pos: Pos) -> Result<(), Error> {
         queue!(stdout(), MoveTo(pos.x, pos.y))?;
         Ok(())
     }
 
-    fn size() -> Result<Size, std::io::Error> {
+    fn size() -> Result<Size, Error> {
         let (width, height) = size()?;
         Ok(Size {
             height: height,
@@ -100,7 +100,7 @@ impl Terminal {
         })
     }
 
-    pub fn execute() -> Result<(), std::io::Error> {
+    pub fn execute() -> Result<(), Error> {
         stdout().flush()?;
         Ok(())
     }

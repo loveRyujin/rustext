@@ -1,5 +1,6 @@
 use crossterm::event::Event;
 use crossterm::event::{Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, read};
+use std::io::Error;
 
 mod terminal;
 use terminal::Terminal;
@@ -20,7 +21,7 @@ impl Editor {
         result.unwrap();
     }
 
-    fn repl(&mut self) -> Result<(), std::io::Error> {
+    fn repl(&mut self) -> Result<(), Error> {
         loop {
             self.refresh_screen()?;
             if self.should_exit {
@@ -33,7 +34,7 @@ impl Editor {
         Ok(())
     }
 
-    fn eval_event(&mut self, event: &Event) -> Result<(), std::io::Error> {
+    fn eval_event(&mut self, event: &Event) -> Result<(), Error> {
         if let Key(KeyEvent {
             code,
             modifiers,
@@ -58,7 +59,7 @@ impl Editor {
         Ok(())
     }
 
-    fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
+    fn refresh_screen(&mut self) -> Result<(), Error> {
         Terminal::hide_cursor()?;
 
         if self.should_exit {
