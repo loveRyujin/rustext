@@ -1,9 +1,11 @@
 use crossterm::event::Event;
-use crossterm::event::{Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, read};
+use crossterm::event::{Event::Key, KeyCode::{Char, Left, Right, Up, Down, PageUp, PageDown, Home, End}, KeyEvent, KeyModifiers, read};
 use std::io::Error;
 
 mod terminal;
 use terminal::Terminal;
+
+use crate::editor::terminal::Pos;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -14,7 +16,7 @@ pub struct Editor {
 
 impl Editor {
     pub fn new() -> Self {
-        Self { should_exit: false }
+        Self { should_exit: false}
     }
 
     pub fn run(&mut self) {
@@ -51,13 +53,47 @@ impl Editor {
                 )
                 .as_str(),
             )?;
-            println!("Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r");
+
+            let pos = Terminal::postion()?;
             match code {
                 Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_exit = true;
                 }
+                Up => {
+                    Terminal::cursor_move_to(Pos { x: pos.x, y: pos.y.saturating_sub(1) })?;
+                },
+                Down => {
+                    let size = Terminal::size()?;
+                    if pos.y.saturating_add(1) >= size.height {
+                        Terminal::cursor_move_to(Pos { x: pos.x, y: pos.y.saturating_add(1) })?;
+                    }
+                },
+                Left => {
+                    Terminal::cursor_move_to(Pos { x: pos.x.saturating_sub(1), y: pos.y })?;
+                },
+                Right => {
+                    let size = Terminal::size()?;
+                    if pos.y.saturating_add(1) >= size.width {
+                        Terminal::cursor_move_to(Pos { x: pos.x.saturating_add(1), y: pos.y })?;
+                    }
+                },
+                PageUp => {
+                    Terminal::cursor_move_to(Pos { x: pos.x, y: 0 })?;
+                },
+                PageDown => {
+                    let size = Terminal::size()?;
+                    Terminal::cursor_move_to(Pos { x: pos.x, y: size.height })?;
+                },
+                Home => {
+                    Terminal::cursor_move_to(Pos { x: 0, y: pos.y })?;
+                },
+                End => {
+                    let size = Terminal::size()?;
+                    Terminal::cursor_move_to(Pos { x: size.width, y: pos.y })?;
+                },
                 _ => (),
             }
+            Terminal::execute()?;
         }
         Ok(())
     }

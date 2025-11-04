@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::io::{Error, Write, stdout};
 
-use crossterm::cursor::{Hide, MoveTo, Show};
+use crossterm::cursor::{Hide, MoveTo, Show, position};
 use crossterm::style::Print;
 use crossterm::terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size};
 use crossterm::{Command, queue};
@@ -67,6 +67,19 @@ impl Terminal {
         #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
         Self::queue_command(MoveTo(pos.x as u16, pos.y as u16))?;
         Ok(())
+    }
+
+    pub fn postion() -> Result<Pos, Error> {
+        let (column, row) = position()?;
+
+        let column = column as usize;
+
+        let row = row as usize;
+
+        Ok(Pos{
+            x: column,
+            y: row,
+        })
     }
 
     pub fn size() -> Result<Size, Error> {
