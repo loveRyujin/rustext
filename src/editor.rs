@@ -1,24 +1,28 @@
-use crossterm::event::Event;
-use crossterm::event::{Event::Key, KeyCode::{Char, Left, Right, Up, Down, PageUp, PageDown, Home, End}, KeyEvent, KeyModifiers, read};
+use core::cmp::min;
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, read};
 use std::io::Error;
 
 mod terminal;
 use terminal::Terminal;
 
-use crate::editor::terminal::Pos;
+use crate::editor::terminal::{Pos, Size};
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Copy, Clone, Default)]
+struct Location {
+    x: usize,
+    y: usize,
+}
+
+#[derive(Default)]
 pub struct Editor {
     should_exit: bool,
+    location: Location,
 }
 
 impl Editor {
-    pub fn new() -> Self {
-        Self { should_exit: false}
-    }
-
     pub fn run(&mut self) {
         Terminal::initialize().unwrap();
         let result = self.repl();
@@ -39,8 +43,44 @@ impl Editor {
         Ok(())
     }
 
+    fn move_point(&mut self, key_code: KeyCode) -> Result<(), Error> {
+        let Location { mut x, mut y } = self.location;
+        let Size { height, width } = Terminal::size()?;
+
+        match key_code {
+            KeyCode::Up => {
+                y = y.saturating_sub(1);
+            }
+            KeyCode::Down => {
+                y = min(y.saturating_add(1), height.saturating_add(1));
+            }
+            KeyCode::Left => {
+                x = x.saturating_sub(1);
+            }
+            KeyCode::Right => {
+                x = min(x.saturating_add(1), width.saturating_add(1));
+            }
+            KeyCode::Home => {
+                x = 0;
+            }
+            KeyCode::End => {
+                x = width.saturating_sub(1);
+            }
+            KeyCode::PageUp => {
+                y = 0;
+            }
+            KeyCode::PageDown => {
+                y = height.saturating_add(1);
+            }
+            _ => (),
+        }
+        self.location = Location { x, y };
+
+        Ok(())
+    }
+
     fn eval_event(&mut self, event: &Event) -> Result<(), Error> {
-        if let Key(KeyEvent {
+        if let Event::Key(KeyEvent {
             code,
             modifiers,
             kind,
@@ -54,43 +94,20 @@ impl Editor {
                 .as_str(),
             )?;
 
-            let pos = Terminal::postion()?;
             match code {
-                Char('q') if *modifiers == KeyModifiers::CONTROL => {
+                KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_exit = true;
                 }
-                Up => {
-                    Terminal::cursor_move_to(Pos { x: pos.x, y: pos.y.saturating_sub(1) })?;
-                },
-                Down => {
-                    let size = Terminal::size()?;
-                    if pos.y.saturating_add(1) >= size.height {
-                        Terminal::cursor_move_to(Pos { x: pos.x, y: pos.y.saturating_add(1) })?;
-                    }
-                },
-                Left => {
-                    Terminal::cursor_move_to(Pos { x: pos.x.saturating_sub(1), y: pos.y })?;
-                },
-                Right => {
-                    let size = Terminal::size()?;
-                    if pos.y.saturating_add(1) >= size.width {
-                        Terminal::cursor_move_to(Pos { x: pos.x.saturating_add(1), y: pos.y })?;
-                    }
-                },
-                PageUp => {
-                    Terminal::cursor_move_to(Pos { x: pos.x, y: 0 })?;
-                },
-                PageDown => {
-                    let size = Terminal::size()?;
-                    Terminal::cursor_move_to(Pos { x: pos.x, y: size.height })?;
-                },
-                Home => {
-                    Terminal::cursor_move_to(Pos { x: 0, y: pos.y })?;
-                },
-                End => {
-                    let size = Terminal::size()?;
-                    Terminal::cursor_move_to(Pos { x: size.width, y: pos.y })?;
-                },
+                KeyCode::Up
+                | KeyCode::Down
+                | KeyCode::Left
+                | KeyCode::Right
+                | KeyCode::Home
+                | KeyCode::End
+                | KeyCode::PageUp
+                | KeyCode::PageDown => {
+                    self.move_point(*code)?;
+                }
                 _ => (),
             }
             Terminal::execute()?;
@@ -99,18 +116,21 @@ impl Editor {
     }
 
     fn refresh_screen(&mut self) -> Result<(), Error> {
-        Terminal::hide_cursor()?;
+        Terminal::hide_caret()?;
+        Terminal::move_caret_to(Pos::default())?;
 
         if self.should_exit {
             Terminal::clear_screen()?;
-            Terminal::reset_cursor()?;
             Terminal::print("Goodbye!\r\n")?;
         } else {
             Self::draw_rows()?;
-            Terminal::reset_cursor()?;
+            Terminal::move_caret_to(Pos {
+                col: self.location.x,
+                row: self.location.y,
+            })?;
         }
 
-        Terminal::show_cursor()?;
+        Terminal::show_caret()?;
         Terminal::execute()?;
 
         Ok(())
