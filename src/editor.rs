@@ -5,10 +5,10 @@ use std::io::Error;
 mod terminal;
 use terminal::Terminal;
 
-use crate::editor::terminal::{Pos, Size};
+mod view;
+use view::View;
 
-const NAME: &str = env!("CARGO_PKG_NAME");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
+use crate::editor::terminal::{Pos, Size};
 
 #[derive(Copy, Clone, Default)]
 struct Location {
@@ -83,17 +83,10 @@ impl Editor {
         if let Event::Key(KeyEvent {
             code,
             modifiers,
-            kind,
-            state,
+            kind: _,
+            state: _,
         }) = event
         {
-            Terminal::print(
-                format!(
-                    "Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r"
-                )
-                .as_str(),
-            )?;
-
             match code {
                 KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_exit = true;
@@ -132,58 +125,6 @@ impl Editor {
 
         Terminal::show_caret()?;
         Terminal::execute()?;
-
-        Ok(())
-    }
-}
-
-struct View;
-
-impl View {
-    fn render() -> Result<(), Error> {
-        let size = Terminal::size()?;
-        for current_height in 0..size.height {
-            Terminal::clear_line()?;
-
-            if current_height == 0 {
-                Terminal::print("hello world!")?;
-            }
-
-            #[allow(clippy::integer_division)]
-            if current_height == size.height / 3 {
-                Self::draw_welcome_message()?;
-            } else {
-                if current_height != 0 {
-                    Self::draw_empth_row()?;
-                }   
-            }
-
-            if current_height.saturating_add(1) < size.height {
-                Terminal::print("\r\n")?;
-            }
-        }
-        Ok(())
-    }
-
-    fn draw_empth_row() -> Result<(), Error> {
-        Terminal::print("~")?;
-        Ok(())
-    }
-
-    fn draw_welcome_message() -> Result<(), Error> {
-        let mut welcome_message = format!("{NAME} editor --version {VERSION}");
-        let width = Terminal::size()?.width as usize;
-        let message_len = welcome_message.len();
-
-        #[allow(clippy::integer_division)]
-        let padding = (width.saturating_sub(message_len)) / 2;
-
-        let spaces = " ".repeat(padding.saturating_sub(1));
-
-        welcome_message = format!("~{spaces}{welcome_message}");
-        welcome_message.truncate(width);
-
-        Terminal::print(welcome_message.as_str())?;
 
         Ok(())
     }
