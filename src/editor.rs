@@ -1,6 +1,7 @@
 use core::cmp::min;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, read};
 use std::io::Error;
+use std::env;
 
 mod terminal;
 use terminal::Terminal;
@@ -25,10 +26,20 @@ pub struct Editor {
 
 impl Editor {
     pub fn run(&mut self) {
+        self.load_file().unwrap();
         Terminal::initialize().unwrap();
         let result = self.repl();
         Terminal::terminate().unwrap();
         result.unwrap();
+    }
+
+    fn load_file(&mut self) -> Result<(), Error> {
+        let args: Vec<String> = env::args().collect();                       
+        if let Some(filename) = args.get(1) {
+            self.view.load(filename.as_str())?;
+        }
+
+        Ok(())               
     }
 
     fn repl(&mut self) -> Result<(), Error> {

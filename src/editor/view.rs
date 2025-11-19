@@ -1,5 +1,6 @@
 use super::terminal::Terminal;
 use std::io::Error;
+use std::fs;
 
 mod buffer;
 use buffer::Buffer;
@@ -26,7 +27,7 @@ impl View {
             }
 
             #[allow(clippy::integer_division)]
-            if current_height == size.height / 3 {
+            if self.buf.is_empty() && current_height == size.height / 3 {
                 Self::draw_welcome_message()?;
             } else {
                 Self::draw_empth_row()?;
@@ -36,6 +37,15 @@ impl View {
                 Terminal::print("\r\n")?;
             }
         }
+        Ok(())
+    }
+
+    pub fn load(&mut self, filename: &str) -> Result<(), Error> {
+        let file_contents = fs::read_to_string(filename)?;
+        for line in file_contents.lines() {
+            self.buf.lines.push(line.to_string());
+        }
+
         Ok(())
     }
 

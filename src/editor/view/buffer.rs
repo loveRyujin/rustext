@@ -5,7 +5,13 @@ pub struct Buffer {
 impl Default for Buffer {
     fn default() -> Self {
         Self {
-            lines: vec!["Hello, world.".to_string()],
+            lines: vec![],
         }
+    }
+}
+
+impl Buffer {
+    pub fn is_empty(&self) -> bool {
+        self.lines.len() == 0
     }
 }
