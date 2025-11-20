@@ -1,7 +1,7 @@
 use core::cmp::min;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, read};
-use std::io::Error;
 use std::env;
+use std::io::Error;
 
 mod terminal;
 use terminal::Terminal;
@@ -34,12 +34,12 @@ impl Editor {
     }
 
     fn load_file(&mut self) -> Result<(), Error> {
-        let args: Vec<String> = env::args().collect();                       
+        let args: Vec<String> = env::args().collect();
         if let Some(filename) = args.get(1) {
             self.view.load(filename.as_str())?;
         }
 
-        Ok(())               
+        Ok(())
     }
 
     fn repl(&mut self) -> Result<(), Error> {

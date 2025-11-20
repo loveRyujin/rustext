@@ -72,10 +72,7 @@ impl Terminal {
         #[allow(clippy::as_conversions)]
         let width = width as usize;
 
-        Ok(Size {
-            height: height,
-            width: width,
-        })
+        Ok(Size { height, width })
     }
 
     pub fn execute() -> Result<(), Error> {

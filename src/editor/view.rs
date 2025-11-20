@@ -1,9 +1,11 @@
 use super::terminal::Terminal;
-use std::io::Error;
 use std::fs;
+use std::io::Error;
 
 mod buffer;
 use buffer::Buffer;
+
+use super::Size;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -15,28 +17,51 @@ pub struct View {
 
 impl View {
     pub fn render(&self) -> Result<(), Error> {
-        let size = Terminal::size()?;
+        if self.buf.is_empty() {
+            Self::render_welcome_screen()
+        } else {
+            self.render_buffer()
+        }
+    }
 
-        for current_height in 0..size.height {
+    fn render_welcome_screen() -> Result<(), Error> {
+        let Size { height, .. } = Terminal::size()?;
+
+        for current_height in 0..height {
             Terminal::clear_line()?;
 
-            if let Some(line) = self.buf.lines.get(current_height) {
-                Terminal::print(line)?;
-                Terminal::print("\r\n")?;
-                continue;
-            }
-
             #[allow(clippy::integer_division)]
-            if self.buf.is_empty() && current_height == size.height / 3 {
+            if current_height == height / 3 {
                 Self::draw_welcome_message()?;
             } else {
                 Self::draw_empth_row()?;
             }
 
-            if current_height.saturating_add(1) < size.height {
+            if current_height.saturating_add(1) < height {
                 Terminal::print("\r\n")?;
             }
         }
+
+        Ok(())
+    }
+
+    fn render_buffer(&self) -> Result<(), Error> {
+        let Size { height, .. } = Terminal::size()?;
+
+        for current_height in 0..height {
+            Terminal::clear_line()?;
+
+            if let Some(line) = self.buf.lines.get(current_height) {
+                Terminal::print(line)?;
+            } else {
+                Self::draw_empth_row()?;
+            }
+
+            if current_height.saturating_add(1) < height {
+                Terminal::print("\r\n")?;
+            }
+        }
+
         Ok(())
     }
 
