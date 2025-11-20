@@ -5,14 +5,23 @@ use std::io::Error;
 mod buffer;
 use buffer::Buffer;
 
-use super::Size;
+use super::{Pos, Size};
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Default)]
 pub struct View {
     buf: Buffer,
+    pub needs_redraw: bool,
+}
+
+impl Default for View {
+    fn default() -> Self {
+        Self {
+            buf: Buffer::default(),
+            needs_redraw: true,
+        }
+    }
 }
 
 impl View {
@@ -38,7 +47,10 @@ impl View {
             }
 
             if current_height.saturating_add(1) < height {
-                Terminal::print("\r\n")?;
+                Terminal::move_caret_to(Pos {
+                    row: current_height.saturating_add(1),
+                    col: 0,
+                })?;
             }
         }
 
@@ -46,19 +58,23 @@ impl View {
     }
 
     fn render_buffer(&self) -> Result<(), Error> {
-        let Size { height, .. } = Terminal::size()?;
+        let Size { height, width } = Terminal::size()?;
 
         for current_height in 0..height {
             Terminal::clear_line()?;
 
             if let Some(line) = self.buf.lines.get(current_height) {
+                line.to_string().truncate(width);
                 Terminal::print(line)?;
             } else {
                 Self::draw_empth_row()?;
             }
 
             if current_height.saturating_add(1) < height {
-                Terminal::print("\r\n")?;
+                Terminal::move_caret_to(Pos {
+                    row: current_height.saturating_add(1),
+                    col: 0,
+                })?;
             }
         }
 

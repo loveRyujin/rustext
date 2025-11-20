@@ -116,6 +116,10 @@ impl Editor {
                 _ => (),
             }
             Terminal::execute()?;
+            self.view.needs_redraw = false;
+        }
+        if let Event::Resize(_, _) = event {
+            self.view.needs_redraw = true;
         }
         Ok(())
     }
@@ -128,7 +132,9 @@ impl Editor {
             Terminal::clear_screen()?;
             Terminal::print("Goodbye!\r\n")?;
         } else {
-            self.view.render()?;
+            if self.view.needs_redraw {
+                self.view.render()?;
+            }
             Terminal::move_caret_to(Pos {
                 col: self.location.x,
                 row: self.location.y,
